@@ -8,7 +8,8 @@ module Miniloader
     def self.connect(path)
       FileUtils.mkdir_p(File.dirname(path)) unless path == ":memory:"
       db = Sequel.sqlite(path == ":memory:" ? nil : path)
-      File.read(SCHEMA_PATH).split(";").map(&:strip).reject(&:empty?).each do |statement|
+      sql_without_comments = File.read(SCHEMA_PATH).gsub(/--.*$/, "")
+      sql_without_comments.split(";").map(&:strip).reject(&:empty?).each do |statement|
         db.run(statement)
       end
       db

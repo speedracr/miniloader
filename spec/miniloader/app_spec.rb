@@ -35,10 +35,10 @@ RSpec.describe Miniloader::App do
     uploader
   end
 
-  def upload_file(bytes: "x" * 10, filename: "song.mp3", token: "hermes-token")
+  def upload_file(bytes: "x" * 10, filename: "song.mp3", token: "hermes-token", fields: {})
     file = Rack::Test::UploadedFile.new(StringIO.new(bytes), "audio/mpeg", original_filename: filename)
     header "Authorization", "Bearer #{token}" if token
-    post "/uploads", { file: file }
+    post "/uploads", { file: file }.merge(fields)
   end
 
   it "reports healthy" do
@@ -106,5 +106,66 @@ RSpec.describe Miniloader::App do
     header "Content-Type", "application/json"
     post "/uploads", JSON.generate(path: "/etc/passwd")
     expect(last_response.status).to eq(403)
+  end
+
+  it "uploads an episode with a Jellyfin-style key and logs it for the catalog" do
+    uploader = configure!
+    upload_file(
+      filename: "raw_download.mp4",
+      fields: { kind: "episode", show: "Cosmos", year: "1980", season: "1", episode: "3",
+                episode_title: "The Backbone of Night" }
+    )
+    expect(last_response.status).to eq(200)
+    body = JSON.parse(last_response.body)
+    expect(body["key"]).to eq(
+      "Shows/Cosmos (1980)/Season 01/Cosmos (1980) - S01E03 - The Backbone of Night.mp4"
+    )
+    expect(uploader.uploads.first[:key]).to eq(body["key"])
+  end
+
+  it "uploads a movie with a Jellyfin-style key" do
+    configure!
+    upload_file(filename: "download.mp4", fields: { kind: "movie", movie: "Arrival", year: "2016" })
+    expect(last_response.status).to eq(200)
+    body = JSON.parse(last_response.body)
+    expect(body["key"]).to eq("Movies/Arrival (2016)/Arrival (2016).mp4")
+  end
+
+  it "rejects episode uploads missing required metadata" do
+    configure!
+    upload_file(filename: "ep.mp4", fields: { kind: "episode", show: "Cosmos" })
+    expect(last_response.status).to eq(422)
+    expect(JSON.parse(last_response.body)["error"]).to match(/season/)
+  end
+
+  it "rejects an unknown kind" do
+    configure!
+    upload_file(filename: "ep.mp4", fields: { kind: "documentary" })
+    expect(last_response.status).to eq(422)
+    expect(JSON.parse(last_response.body)["error"]).to match(/unknown kind/)
+  end
+
+  describe "GET /catalog" do
+    it "requires a valid token" do
+      configure!
+      get "/catalog"
+      expect(last_response.status).to eq(401)
+    end
+
+    it "lists uploaded episodes, optionally filtered by show and season" do
+      configure!
+      upload_file(filename: "ep1.mp4", fields: { kind: "episode", show: "Cosmos", season: "1", episode: "1" })
+      upload_file(filename: "ep2.mp4", fields: { kind: "episode", show: "Cosmos", season: "2", episode: "1" })
+      upload_file(filename: "song.mp3") # generic upload, no media metadata
+
+      header "Authorization", "Bearer hermes-token"
+      get "/catalog", kind: "episode", show: "Cosmos", season: "1"
+
+      expect(last_response.status).to eq(200)
+      rows = JSON.parse(last_response.body)["uploads"]
+      expect(rows.size).to eq(1)
+      expect(rows.first["season_number"]).to eq(1)
+      expect(rows.first["title"]).to eq("Cosmos")
+    end
   end
 end
