@@ -1,0 +1,12 @@
+.env
+.env.*
+!.env.example
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/log/
+/tmp/
+*.gem
+.bundle/
+vendor/bundle/
+Gemfile.lock.bak
+.DS_Store

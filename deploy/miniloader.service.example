@@ -1,0 +1,39 @@
+# Example systemd unit for running miniloader on the Nucbox.
+#
+# Setup (as root):
+#   1. Create a dedicated, unprivileged user for this service:
+#        useradd --system --home /opt/miniloader --shell /usr/sbin/nologin miniloader
+#   2. Deploy the app to /opt/miniloader (git clone + bundle install --deployment,
+#      or rsync a release), owned by that user.
+#   3. Copy .env.example to /opt/miniloader/.env, fill in real B2 credentials and
+#      per-service tokens, then: chown miniloader:miniloader .env && chmod 600 .env
+#   4. Copy this file to /etc/systemd/system/miniloader.service, adjust paths below.
+#   5. systemctl daemon-reload && systemctl enable --now miniloader
+#
+# Giving this service its own system user (and, later, the print-service its own)
+# keeps a bug or compromise in one service from being able to read another
+# service's .env / B2 keys.
+
+[Unit]
+Description=miniloader - Backblaze B2 upload service
+After=network.target
+
+[Service]
+Type=simple
+User=miniloader
+Group=miniloader
+WorkingDirectory=/opt/miniloader
+EnvironmentFile=/opt/miniloader/.env
+ExecStart=/usr/bin/env bundle exec puma -C config/puma.rb config.ru
+Restart=on-failure
+RestartSec=2
+
+# Hardening: no reason for this service to touch anything outside its own dir.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/miniloader/db
+
+[Install]
+WantedBy=multi-user.target
