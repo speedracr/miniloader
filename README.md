@@ -20,8 +20,49 @@ sits between agents and B2 so that:
 
 ## Requirements
 
-- Ruby >= 3.1
+- Ruby >= 3.1 (this repo pins `3.3.6` via `.ruby-version`; see "Ruby via
+  rbenv" below for installing it on a fresh machine)
 - A Backblaze B2 bucket + an application key scoped to it (S3-compatible API)
+
+## Ruby via rbenv
+
+On a fresh Nucbox, install Ruby with a system-wide rbenv rather than the
+distro package, so every service on the box (this one, and future siblings
+like a print-service) shares one place to manage Ruby versions:
+
+```bash
+sudo apt update
+sudo apt install -y git build-essential libssl-dev libreadline-dev \
+  zlib1g-dev libyaml-dev libsqlite3-dev
+
+sudo git clone https://github.com/rbenv/rbenv.git /opt/rbenv
+sudo git clone https://github.com/rbenv/ruby-build.git /opt/rbenv/plugins/ruby-build
+
+# Make rbenv's shims/bin available to every user's shell.
+sudo tee /etc/profile.d/rbenv.sh > /dev/null <<'EOF'
+export RBENV_ROOT=/opt/rbenv
+export PATH="$RBENV_ROOT/bin:$RBENV_ROOT/shims:$PATH"
+EOF
+sudo chmod +x /etc/profile.d/rbenv.sh
+source /etc/profile.d/rbenv.sh
+
+# Let any user trigger a rehash (e.g. after installing a gem with binaries).
+sudo chmod -R a+rX /opt/rbenv
+
+sudo RBENV_ROOT=/opt/rbenv /opt/rbenv/bin/rbenv install 3.3.6
+sudo RBENV_ROOT=/opt/rbenv /opt/rbenv/bin/rbenv global 3.3.6
+sudo RBENV_ROOT=/opt/rbenv /opt/rbenv/bin/rbenv rehash
+```
+
+Note: `/etc/profile.d` only applies to login shells, not systemd services —
+`deploy/miniloader.service.example` sets `PATH`/`RBENV_ROOT` explicitly for
+that reason.
+
+Verify:
+
+```bash
+ruby -v   # should print 3.3.6
+```
 
 ## Setup
 
@@ -128,6 +169,29 @@ See `deploy/miniloader.service.example` for a systemd unit. Run this (and
 any future sibling service, e.g. a print-service) under its own dedicated
 system user with its own `.env`, so a bug or compromise in one service can't
 read another service's credentials.
+
+With rbenv installed system-wide as above:
+
+```bash
+sudo useradd --system --home /opt/miniloader --create-home --shell /usr/sbin/nologin miniloader
+sudo git clone https://github.com/speedracr/miniloader.git /opt/miniloader
+sudo chown -R miniloader:miniloader /opt/miniloader
+
+sudo -u miniloader -H env RBENV_ROOT=/opt/rbenv PATH="/opt/rbenv/shims:/opt/rbenv/bin:$PATH" \
+  bash -c 'cd /opt/miniloader && bundle config set --local path vendor/bundle && \
+           bundle install --deployment --without development test'
+sudo RBENV_ROOT=/opt/rbenv /opt/rbenv/bin/rbenv rehash
+
+sudo -u miniloader cp /opt/miniloader/.env.example /opt/miniloader/.env
+sudo -u miniloader nano /opt/miniloader/.env   # fill in real values, see Setup above
+sudo chmod 600 /opt/miniloader/.env
+
+sudo cp /opt/miniloader/deploy/miniloader.service.example /etc/systemd/system/miniloader.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now miniloader
+sudo systemctl status miniloader
+curl http://127.0.0.1:4567/health
+```
 
 ## Tests
 

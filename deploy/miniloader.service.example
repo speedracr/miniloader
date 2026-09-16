@@ -1,5 +1,9 @@
 # Example systemd unit for running miniloader on the Nucbox.
 #
+# Assumes Ruby is managed system-wide via rbenv at /opt/rbenv (shared by this
+# and any future sibling service, e.g. a print-service), rather than distro
+# packages. See README.md "Ruby via rbenv" for the rbenv install steps.
+#
 # Setup (as root):
 #   1. Create a dedicated, unprivileged user for this service:
 #        useradd --system --home /opt/miniloader --shell /usr/sbin/nologin miniloader
@@ -12,7 +16,8 @@
 #
 # Giving this service its own system user (and, later, the print-service its own)
 # keeps a bug or compromise in one service from being able to read another
-# service's .env / B2 keys.
+# service's .env / B2 keys. rbenv itself is shared and read-only from this
+# service's point of view, so that doesn't weaken the isolation.
 
 [Unit]
 Description=miniloader - Backblaze B2 upload service
@@ -23,8 +28,12 @@ Type=simple
 User=miniloader
 Group=miniloader
 WorkingDirectory=/opt/miniloader
+Environment="PATH=/opt/rbenv/shims:/opt/rbenv/bin:/usr/bin:/bin"
+Environment="RBENV_ROOT=/opt/rbenv"
 EnvironmentFile=/opt/miniloader/.env
-ExecStart=/usr/bin/env bundle exec puma -C config/puma.rb config.ru
+# Full path avoids depending on ExecStart's PATH resolution; the rbenv shim
+# still picks the Ruby version from this directory's .ruby-version.
+ExecStart=/opt/rbenv/shims/bundle exec puma -C config/puma.rb config.ru
 Restart=on-failure
 RestartSec=2
 
