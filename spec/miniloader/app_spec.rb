@@ -138,6 +138,17 @@ RSpec.describe Miniloader::App do
     expect(JSON.parse(last_response.body)["error"]).to match(/season/)
   end
 
+  it "uploads a podcast episode with a Podcasts-style key" do
+    configure!
+    upload_file(
+      filename: "raw.mp3",
+      fields: { kind: "podcast", show: "Accidental Tech Podcast", episode: "7", episode_title: "Coffee Ban" }
+    )
+    expect(last_response.status).to eq(200)
+    body = JSON.parse(last_response.body)
+    expect(body["key"]).to eq("Podcasts/Accidental Tech Podcast/Accidental Tech Podcast - Ep007 - Coffee Ban.mp3")
+  end
+
   it "rejects an unknown kind" do
     configure!
     upload_file(filename: "ep.mp4", fields: { kind: "documentary" })

@@ -39,6 +39,36 @@ RSpec.describe Miniloader::MediaKey do
       expect(plan.year).to eq(2016)
     end
 
+    it "builds a Podcasts-style key for a podcast episode" do
+      plan = described_class.build("hermes", "raw.mp3", {
+        "kind" => "podcast", "show" => "Accidental Tech Podcast",
+        "episode" => "7", "episode_title" => "Coffee Ban"
+      })
+
+      expect(plan.key).to eq(
+        "Podcasts/Accidental Tech Podcast/Accidental Tech Podcast - Ep007 - Coffee Ban.mp3"
+      )
+      expect(plan.media_kind).to eq("podcast")
+      expect(plan.title).to eq("Accidental Tech Podcast")
+      expect(plan.episode_number).to eq(7)
+      expect(plan.episode_title).to eq("Coffee Ban")
+      expect(plan.season_number).to be_nil
+    end
+
+    it "builds a podcast key without an episode title" do
+      plan = described_class.build("hermes", "raw.mp3", {
+        "kind" => "podcast", "show" => "ATP", "episode" => "12"
+      })
+
+      expect(plan.key).to eq("Podcasts/ATP/ATP - Ep012.mp3")
+    end
+
+    it "requires show and episode for kind=podcast" do
+      expect do
+        described_class.build("hermes", "raw.mp3", { "kind" => "podcast", "show" => "ATP" })
+      end.to raise_error(Miniloader::MediaKey::InvalidMetadata, /episode is required/)
+    end
+
     it "falls back to the flat, timestamped key when no kind is given" do
       plan = described_class.build("hermes", "voice memo.mp3", {})
 
