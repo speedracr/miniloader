@@ -159,18 +159,35 @@ curl -X POST http://127.0.0.1:4567/uploads \
 
 → key `Movies/Arrival (2016)/Arrival (2016).mkv`.
 
+A podcast episode — `kind=podcast` plus `show`/`episode` (and optionally
+`episode_title`):
+
+```
+curl -X POST http://127.0.0.1:4567/uploads \
+  -H "Authorization: Bearer $HERMES_TOKEN" \
+  -F file=@raw.mp3 \
+  -F kind=podcast -F show="Accidental Tech Podcast" \
+  -F episode=7 -F episode_title="Coffee Ban"
+```
+
+→ key `Podcasts/Accidental Tech Podcast/Accidental Tech Podcast - Ep007 - Coffee Ban.mp3`.
+
 On rejection you get a 4xx/429 with `{"error": "..."}` explaining which
 guardrail tripped (bad extension, too large, rate limit, concurrency limit,
 daily/monthly quota, or missing/invalid media metadata).
 
 ### Media keys (Jellyfin/Kodi-style layout)
 
-When `kind` is `episode` or `movie`, miniloader builds the B2 object key
-using the naming convention Jellyfin/Kodi/Emby already scan for automatically:
+When `kind` is `episode`, `movie`, or `podcast`, miniloader builds the B2
+object key using the naming convention Jellyfin/Kodi/Emby already scan for
+automatically (podcasts aren't natively a Jellyfin library type, but the same
+predictable, browsable layout is useful regardless of what ends up reading
+it):
 
 ```
 Shows/<Show> (<Year>)/Season NN/<Show> (<Year>) - SNNENN - <Episode Title>.ext
 Movies/<Movie> (<Year>)/<Movie> (<Year>).ext
+Podcasts/<Show>/<Show> - EpNNN - <Episode Title>.ext
 ```
 
 `year` is optional but recommended (Jellyfin disambiguates shows/movies with
@@ -192,7 +209,8 @@ Read-only view over everything miniloader has uploaded, backed by the same
 SQLite log used for quotas — useful for other local services (or scripts) to
 discover what's in the bucket without listing/parsing B2 keys themselves.
 Requires a bearer token like `/uploads`. Optional query filters: `kind`
-(`episode`/`movie`), `show`, `movie`, `season`.
+(`episode`/`movie`/`podcast`), `show` (matches a TV or podcast show name),
+`movie`, `season`.
 
 ```
 curl -H "Authorization: Bearer $HERMES_TOKEN" \

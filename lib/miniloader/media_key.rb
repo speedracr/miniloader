@@ -1,9 +1,10 @@
 require "securerandom"
 
 module Miniloader
-  # Builds B2 object keys. TV episodes and movies get a Jellyfin/Kodi-style
-  # path (Shows/<Show> (<Year>)/Season NN/<Show> (<Year>) - SxxEyy - <Title>.ext,
-  # Movies/<Movie> (<Year>)/<Movie> (<Year>).ext) so the bucket is browsable and
+  # Builds B2 object keys. TV episodes, movies, and podcast episodes get a
+  # Jellyfin/Kodi-style path (Shows/<Show> (<Year>)/Season NN/<Show> (<Year>) -
+  # SxxEyy - <Title>.ext, Movies/<Movie> (<Year>)/<Movie> (<Year>).ext,
+  # Podcasts/<Show>/<Show> - EpNNN - <Title>.ext) so the bucket is browsable and
   # scannable without a separate metadata database. Uploads without that
   # metadata (kind omitted) fall back to the original flat, timestamped key.
   class MediaKey
@@ -21,9 +22,11 @@ module Miniloader
       case kind
       when "episode" then build_episode(filename, ext, data)
       when "movie" then build_movie(filename, ext, data)
+      when "podcast" then build_podcast(filename, ext, data)
       when nil then build_generic(caller_name, filename, ext)
       else
-        raise InvalidMetadata, "unknown kind #{kind.inspect} (expected \"episode\", \"movie\", or omitted)"
+        raise InvalidMetadata,
+              "unknown kind #{kind.inspect} (expected \"episode\", \"movie\", \"podcast\", or omitted)"
       end
     end
 
@@ -64,6 +67,24 @@ module Miniloader
                season_number: nil, episode_number: nil, episode_title: nil)
     end
 
+    def self.build_podcast(_filename, ext, data)
+      show = require_field(data, :show, "show")
+      episode = require_integer(data, :episode, "episode")
+      episode_title = string_field(data, :episode_title)
+
+      code = format("Ep%03d", episode)
+      file_base = [show, code, episode_title].compact.join(" - ")
+
+      key = [
+        "Podcasts",
+        sanitize(show),
+        "#{sanitize(file_base)}#{ext}"
+      ].join("/")
+
+      Plan.new(key: key, media_kind: "podcast", title: show, year: nil,
+               season_number: nil, episode_number: episode, episode_title: episode_title)
+    end
+
     def self.build_generic(caller_name, filename, ext)
       base = File.basename(filename, ext).gsub(/[^a-zA-Z0-9_-]/, "_")
       timestamp = Time.now.utc.strftime("%Y%m%d%H%M%S")
@@ -72,7 +93,7 @@ module Miniloader
       Plan.new(key: key, media_kind: nil, title: nil, year: nil,
                season_number: nil, episode_number: nil, episode_title: nil)
     end
-    private_class_method :build_episode, :build_movie, :build_generic
+    private_class_method :build_episode, :build_movie, :build_podcast, :build_generic
 
     def self.string_field(data, key)
       value = data[key.to_s]
