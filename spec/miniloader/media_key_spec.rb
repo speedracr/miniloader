@@ -10,7 +10,7 @@ RSpec.describe Miniloader::MediaKey do
       })
 
       expect(plan.key).to eq(
-        "Shows/Cosmos (1980)/Season 01/Cosmos (1980) - S01E03 - The Backbone of Night.mp4"
+        "shows/Cosmos (1980)/Season 01/Cosmos (1980) - S01E03 - The Backbone of Night.mp4"
       )
       expect(plan.media_kind).to eq("episode")
       expect(plan.title).to eq("Cosmos")
@@ -25,7 +25,7 @@ RSpec.describe Miniloader::MediaKey do
         "kind" => "episode", "show" => "Cosmos", "season" => "1", "episode" => "3"
       })
 
-      expect(plan.key).to eq("Shows/Cosmos/Season 01/Cosmos - S01E03.mkv")
+      expect(plan.key).to eq("shows/Cosmos/Season 01/Cosmos - S01E03.mkv")
     end
 
     it "builds a Jellyfin-style key for a movie" do
@@ -33,7 +33,7 @@ RSpec.describe Miniloader::MediaKey do
         "kind" => "movie", "movie" => "Arrival", "year" => "2016"
       })
 
-      expect(plan.key).to eq("Movies/Arrival (2016)/Arrival (2016).mkv")
+      expect(plan.key).to eq("movies/Arrival (2016)/Arrival (2016).mkv")
       expect(plan.media_kind).to eq("movie")
       expect(plan.title).to eq("Arrival")
       expect(plan.year).to eq(2016)
@@ -46,7 +46,7 @@ RSpec.describe Miniloader::MediaKey do
       })
 
       expect(plan.key).to eq(
-        "Podcasts/Accidental Tech Podcast/Accidental Tech Podcast - Ep007 - Coffee Ban.mp3"
+        "podcasts/Accidental Tech Podcast/Accidental Tech Podcast - Ep007 - Coffee Ban.mp3"
       )
       expect(plan.media_kind).to eq("podcast")
       expect(plan.title).to eq("Accidental Tech Podcast")
@@ -60,7 +60,7 @@ RSpec.describe Miniloader::MediaKey do
         "kind" => "podcast", "show" => "ATP", "episode" => "12"
       })
 
-      expect(plan.key).to eq("Podcasts/ATP/ATP - Ep012.mp3")
+      expect(plan.key).to eq("podcasts/ATP/ATP - Ep012.mp3")
     end
 
     it "requires show and episode for kind=podcast" do
@@ -82,7 +82,7 @@ RSpec.describe Miniloader::MediaKey do
       })
 
       expect(plan.key).not_to include("/Weird: Show/Name?/")
-      expect(plan.key).to start_with("Shows/Weird_ Show_Name_/")
+      expect(plan.key).to start_with("shows/Weird_ Show_Name_/")
     end
 
     it "rejects an unknown kind" do

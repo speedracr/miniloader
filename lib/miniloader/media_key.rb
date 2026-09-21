@@ -2,9 +2,9 @@ require "securerandom"
 
 module Miniloader
   # Builds B2 object keys. TV episodes, movies, and podcast episodes get a
-  # Jellyfin/Kodi-style path (Shows/<Show> (<Year>)/Season NN/<Show> (<Year>) -
-  # SxxEyy - <Title>.ext, Movies/<Movie> (<Year>)/<Movie> (<Year>).ext,
-  # Podcasts/<Show>/<Show> - EpNNN - <Title>.ext) so the bucket is browsable and
+  # Jellyfin/Kodi-style path (shows/<Show> (<Year>)/Season NN/<Show> (<Year>) -
+  # SxxEyy - <Title>.ext, movies/<Movie> (<Year>)/<Movie> (<Year>).ext,
+  # podcasts/<Show>/<Show> - EpNNN - <Title>.ext) so the bucket is browsable and
   # scannable without a separate metadata database. Uploads without that
   # metadata (kind omitted) fall back to the original flat, timestamped key.
   class MediaKey
@@ -42,7 +42,7 @@ module Miniloader
       file_base = [show_label, code, episode_title].compact.join(" - ")
 
       key = [
-        "Shows",
+        "shows",
         sanitize(show_label),
         format("Season %02d", season),
         "#{sanitize(file_base)}#{ext}"
@@ -58,7 +58,7 @@ module Miniloader
       movie_label = year ? "#{movie} (#{year})" : movie
 
       key = [
-        "Movies",
+        "movies",
         sanitize(movie_label),
         "#{sanitize(movie_label)}#{ext}"
       ].join("/")
@@ -76,7 +76,7 @@ module Miniloader
       file_base = [show, code, episode_title].compact.join(" - ")
 
       key = [
-        "Podcasts",
+        "podcasts",
         sanitize(show),
         "#{sanitize(file_base)}#{ext}"
       ].join("/")
