@@ -245,6 +245,16 @@ copying the file over HTTP a second time. Paths outside that directory are
 rejected. Leave the variable unset to disable this entirely (multipart
 upload still works).
 
+### Content-Type / inline playback
+
+miniloader sets the object's `Content-Type` from its extension (`lib/miniloader/uploader.rb`'s
+`CONTENT_TYPES` map — covers the audio/video/image/pdf types this service is
+meant for) so that opening the B2 URL in a browser plays/previews the file
+(e.g. an mp3 gets an inline audio player) instead of forcing a download.
+Unrecognized extensions fall back to `application/octet-stream`, which still
+downloads — add the extension to `CONTENT_TYPES` if you need a new type to
+open inline.
+
 ## Guardrails
 
 All limits are enforced per caller token:
