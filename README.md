@@ -142,8 +142,8 @@ curl -X POST http://127.0.0.1:4567/uploads \
 
 ```json
 {
-  "url": ".../file/my-bucket/Shows/Cosmos%20(1980)/Season%2001/Cosmos%20(1980)%20-%20S01E03%20-%20The%20Backbone%20of%20Night.mp4",
-  "key": "Shows/Cosmos (1980)/Season 01/Cosmos (1980) - S01E03 - The Backbone of Night.mp4",
+  "url": ".../file/my-bucket/shows/Cosmos%20(1980)/Season%2001/Cosmos%20(1980)%20-%20S01E03%20-%20The%20Backbone%20of%20Night.mp4",
+  "key": "shows/Cosmos (1980)/Season 01/Cosmos (1980) - S01E03 - The Backbone of Night.mp4",
   "size": 12345678,
   "sha256": "..."
 }
@@ -157,7 +157,7 @@ curl -X POST http://127.0.0.1:4567/uploads \
   -F file=@download.mkv -F kind=movie -F movie="Arrival" -F year=2016
 ```
 
-→ key `Movies/Arrival (2016)/Arrival (2016).mkv`.
+→ key `movies/Arrival (2016)/Arrival (2016).mkv`.
 
 A podcast episode — `kind=podcast` plus `show`/`episode` (and optionally
 `episode_title`):
@@ -170,7 +170,7 @@ curl -X POST http://127.0.0.1:4567/uploads \
   -F episode=7 -F episode_title="Coffee Ban"
 ```
 
-→ key `Podcasts/Accidental Tech Podcast/Accidental Tech Podcast - Ep007 - Coffee Ban.mp3`.
+→ key `podcasts/Accidental Tech Podcast/Accidental Tech Podcast - Ep007 - Coffee Ban.mp3`.
 
 On rejection you get a 4xx/429 with `{"error": "..."}` explaining which
 guardrail tripped (bad extension, too large, rate limit, concurrency limit,
@@ -185,9 +185,9 @@ predictable, browsable layout is useful regardless of what ends up reading
 it):
 
 ```
-Shows/<Show> (<Year>)/Season NN/<Show> (<Year>) - SNNENN - <Episode Title>.ext
-Movies/<Movie> (<Year>)/<Movie> (<Year>).ext
-Podcasts/<Show>/<Show> - EpNNN - <Episode Title>.ext
+shows/<Show> (<Year>)/Season NN/<Show> (<Year>) - SNNENN - <Episode Title>.ext
+movies/<Movie> (<Year>)/<Movie> (<Year>).ext
+podcasts/<Show>/<Show> - EpNNN - <Episode Title>.ext
 ```
 
 `year` is optional but recommended (Jellyfin disambiguates shows/movies with
@@ -222,7 +222,7 @@ curl -H "Authorization: Bearer $HERMES_TOKEN" \
   "uploads": [
     {
       "id": 1, "caller": "hermes", "filename": "raw_download.mp4", "bytes": 12345678,
-      "sha256": "...", "b2_key": "Shows/Cosmos (1980)/Season 01/...mp4",
+      "sha256": "...", "b2_key": "shows/Cosmos (1980)/Season 01/...mp4",
       "url": "...", "created_at": "2025-01-01T12:00:00Z",
       "media_kind": "episode", "title": "Cosmos", "year": 1980,
       "season_number": 1, "episode_number": 3, "episode_title": "The Backbone of Night"

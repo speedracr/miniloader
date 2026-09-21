@@ -118,7 +118,7 @@ RSpec.describe Miniloader::App do
     expect(last_response.status).to eq(200)
     body = JSON.parse(last_response.body)
     expect(body["key"]).to eq(
-      "Shows/Cosmos (1980)/Season 01/Cosmos (1980) - S01E03 - The Backbone of Night.mp4"
+      "shows/Cosmos (1980)/Season 01/Cosmos (1980) - S01E03 - The Backbone of Night.mp4"
     )
     expect(uploader.uploads.first[:key]).to eq(body["key"])
   end
@@ -128,7 +128,7 @@ RSpec.describe Miniloader::App do
     upload_file(filename: "download.mp4", fields: { kind: "movie", movie: "Arrival", year: "2016" })
     expect(last_response.status).to eq(200)
     body = JSON.parse(last_response.body)
-    expect(body["key"]).to eq("Movies/Arrival (2016)/Arrival (2016).mp4")
+    expect(body["key"]).to eq("movies/Arrival (2016)/Arrival (2016).mp4")
   end
 
   it "rejects episode uploads missing required metadata" do
@@ -146,7 +146,7 @@ RSpec.describe Miniloader::App do
     )
     expect(last_response.status).to eq(200)
     body = JSON.parse(last_response.body)
-    expect(body["key"]).to eq("Podcasts/Accidental Tech Podcast/Accidental Tech Podcast - Ep007 - Coffee Ban.mp3")
+    expect(body["key"]).to eq("podcasts/Accidental Tech Podcast/Accidental Tech Podcast - Ep007 - Coffee Ban.mp3")
   end
 
   it "rejects an unknown kind" do
